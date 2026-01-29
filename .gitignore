@@ -1,0 +1,36 @@
+# Virtual Environment
+doc_merger_env/
+venv/
+env/
+
+# Output and Intermediate Directories
+output/
+converted/
+temp/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# System Files
+.DS_Store
+
+# Temporary Office Files
+~$*
+
+# Documents in root (keep input/ folder content unless specified otherwise)
+*.docx
+*.pdf
+
+# Exception for PDF/DOCX if they are required assets (like logo or specific examples to keep)
+!ideas_logo.png
+!scripts/
+!input/
+
+# Dev/Debug Scripts
+check_*.py
+inspect_*.py
+test.pdf
+
+# Logs
+*.log
