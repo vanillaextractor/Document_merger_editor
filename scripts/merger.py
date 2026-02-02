@@ -65,38 +65,38 @@ class DocumentMerger:
             output_pdf = chapter['original']
         else:
             try:
-                if chapter['format'] == '.docx':
-                    pypandoc.convert_file(chapter['original'], 'pdf', 
-                                        outputfile=str(output_pdf),
-                                        extra_args=['--pdf-engine=xelatex', 
-                                                  '-V', 'mainfont=Arial',
-                                                  '-V', 'monofont=Courier New',
-                                                  '-V', 'fontsize=12pt',
-                                                  '-V', 'linestretch=1.5',
-                                                  '-V', 'pagestyle=empty',  # Suppress chapter numbering
-                                                  '-H', str(header_path),
-                                                  '-V', 'geometry:margin=1in'])
-                elif chapter['format'] == '.tex':
-                    # For tex files, we'd need to insert the header inclusion manually or assume it's standalone
-                    # defaulting to simple compilation for now as user input is docx
-                    subprocess.run(['xelatex', '-interaction=nonstopmode', 
-                                  '-output-directory', str(self.temp_dir),
-                                  str(chapter['original'])], 
-                                  capture_output=True)
-                    output_pdf = self.temp_dir / f"{chapter['original'].stem}.pdf"
+                # Use standard fonts or let LaTeX decide for better compatibility across OS
+                # Removing explicit Arial/Courier New dependency
+                try:
+                    if chapter['format'] == '.docx':
+                        pypandoc.convert_file(chapter['original'], 'pdf', 
+                                            outputfile=str(output_pdf),
+                                            extra_args=['--pdf-engine=xelatex', 
+                                                        '-V', 'geometry:margin=1in'])
+                    elif chapter['format'] == '.tex':
+                        # For tex files, we'd need to insert the header inclusion manually or assume it's standalone
+                        # defaulting to simple compilation for now as user input is docx
+                        subprocess.run(['xelatex', '-interaction=nonstopmode', 
+                                    '-output-directory', str(self.temp_dir),
+                                    str(chapter['original'])], 
+                                    capture_output=True)
+                        output_pdf = self.temp_dir / f"{chapter['original'].stem}.pdf"
+                    else:
+                        pypandoc.convert_file(chapter['original'], 'pdf', 
+                                            outputfile=str(output_pdf),
+                                            extra_args=['--pdf-engine=xelatex',
+                                                        '-V', 'geometry:margin=1in'])
+                except RuntimeError as re:
+                     print(f"⚠️  Conversion error for {chapter['name']}: {re}")
+                     # If pypandoc fails, it usually raises RuntimeError
+                     return chapter
+
+                if output_pdf.exists() and output_pdf.stat().st_size > 0:
+                    chapter['pdf'] = output_pdf
+                    print(f"✅ Converted: {chapter['name']}")
                 else:
-                    pypandoc.convert_file(chapter['original'], 'pdf', 
-                                        outputfile=str(output_pdf),
-                                        extra_args=['--pdf-engine=xelatex',
-                                                  '-V', 'mainfont=Arial',
-                                                  '-V', 'monofont=Courier New',
-                                                  '-V', 'fontsize=12pt',
-                                                  '-V', 'linestretch=1.5',
-                                                  '-V', 'pagestyle=empty',  # Suppress chapter numbering
-                                                  '-H', str(header_path),
-                                                  '-V', 'geometry:margin=1in'])
-                chapter['pdf'] = output_pdf
-                print(f"✅ Converted: {chapter['name']}")
+                     print(f"❌ Failed to generate PDF for {chapter['name']} (Empty or missing file)")
+
             except Exception as e:
                 print(f"❌ Failed to convert {chapter['name']}: {e}")
         
