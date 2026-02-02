@@ -21,6 +21,8 @@ __pycache__/
 # Documents in root (keep input/ folder content unless specified otherwise)
 *.docx
 *.pdf
+!input/*.docx
+!input/*.pdf
 
 # Exception for PDF/DOCX if they are required assets (like logo or specific examples to keep)
 !ideas_logo.png
