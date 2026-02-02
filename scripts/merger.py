@@ -268,11 +268,11 @@ class DocumentMerger:
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 
-\pagestyle{fancy}
-\fancyhf{}
-\lhead{\textbf{Index}}
-\rhead{\thepage}
-\cfoot{\textbf{Institute of Data Engineering Analytics and Science}}
+\pagestyle{empty} % No header/footer for index as requested
+% \fancyhf{}
+% \lhead{\textbf{Index}}
+% \rhead{\thepage}
+% \cfoot{\textbf{Institute of Data Engineering Analytics and Science}}
 
 \title{\textbf{Index}}
 \date{}
@@ -323,6 +323,7 @@ class DocumentMerger:
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{newunicodechar}
+\usepackage{lastpage} % For n/m page numbering
 
 % Emoji support
 % \newfontfamily\emojifont{Apple Color Emoji}[Renderer=Harfbuzz]
@@ -338,10 +339,8 @@ class DocumentMerger:
 
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\textbf{NPCYF Documentation}}
-\rhead{\thepage}
-\cfoot{\includegraphics[height=0.8cm]{ideas_logo.png} \hspace{10pt} \textbf{Institute of Data Engineering Analytics and Science}}
-
+% Header will be set dynamically per chapter
+\rhead{\thepage{} / \pageref{LastPage}}
 \cfoot{\includegraphics[height=0.8cm]{ideas_logo.png} \hspace{10pt} \textbf{Institute of Data Engineering Analytics and Science}}
 
 \title{\textbf{""" + title + r"""}}
@@ -372,14 +371,22 @@ class DocumentMerger:
                 else:
                     full_addtotoc = chapter_entry
                 
+                # Dynamic header for this chapter
+                # Escape curly braces for f-string
+                # We need to set the header BEFORE including the PDF, and ensure page style is applied
+                header_title = f"NPCYF {chapter_title}"
+                # Replacing potential LaTeX special chars in title for header might be needed but assuming clean title for now
+                
                 latex_content += f"""
-\\includepdf[pages=-, pagecommand={{}}, addtotoc={{{full_addtotoc}}}]{{{pdf_path}}}
+\\lhead{{\\textbf{{{header_title}}}}}
+\\includepdf[pages=-, pagecommand={{\\thispagestyle{{fancy}}}}, addtotoc={{{full_addtotoc}}}]{{{pdf_path}}}
 """
         
         # Append Index if available
         if index_pdf:
             index_path = index_pdf.resolve().as_posix()
             latex_content += f"""
+\\pagestyle{{empty}} % No header/footer for index
 \\includepdf[pages=-, pagecommand={{}}, addtotoc={{1,chapter,0,Index,idx}}]{{{index_path}}}
 """
 
@@ -398,7 +405,7 @@ class DocumentMerger:
             
         output_pdf = self.output_dir / final_name
         
-        # Compile twice for TOC
+        # Compile twice for TOC and LastPage ref
         for i in range(2):
             subprocess.run([
                 'xelatex', '-interaction=nonstopmode', 
@@ -420,7 +427,8 @@ class DocumentMerger:
 
 @click.command()
 @click.option('--name', default=None, help='Name for the final PDF document')
-def main(name):
+@click.option('--title', default=None, help='Title for the document cover page')
+def main(name, title):
     merger = DocumentMerger()
     print("🔍 Scanning documents...")
     merger.scan_documents()
@@ -441,6 +449,14 @@ def main(name):
         else:
              print(f"📄 Output name provided: {custom_name}")
 
+        # Determine Document Title
+        doc_title = title
+        if not doc_title:
+             # If no title CLI arg, fallback to name (replacing underscores) 
+             # Or prompt if we are in interactive mode (implied by no name arg? or just strictly CL?)
+             # User logic: "for title you have to use cli". If not provided, we can maybe default to name.
+             doc_title = custom_name.replace("_", " ")
+
         print("\n🔄 Converting...")
         for chapter in merger.chapters:
             merger.convert_to_pdf(chapter)
@@ -451,8 +467,6 @@ def main(name):
         index_pdf = merger.generate_index_pdf(keyword_map)
         
         print("\n📚 Creating master document...")
-        # Use custom_name for title, replacing underscores with spaces
-        doc_title = custom_name.replace("_", " ")
         master_tex = merger.create_master_latex(index_pdf, doc_title)
         
         print("\n⚙️  Compiling...")
