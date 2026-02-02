@@ -205,7 +205,10 @@ class DocumentMerger:
 
         print(f"🔍 Reading keywords from {keywords_file}...")
         with open(keywords_file, 'r', encoding='utf-8') as f:
-            keywords = [line.strip() for line in f if line.strip()]
+            content = f.read()
+        
+        # Split by comma or newline to handle both formats
+        keywords = [k.strip() for k in re.split(r'[,\n]', content) if k.strip()]
         
         if not keywords:
             print("⚠️  Keywords file is empty.")
@@ -415,7 +418,9 @@ class DocumentMerger:
             
         return output_pdf
 
-if __name__ == '__main__':
+@click.command()
+@click.option('--name', default=None, help='Name for the final PDF document')
+def main(name):
     merger = DocumentMerger()
     print("🔍 Scanning documents...")
     merger.scan_documents()
@@ -424,12 +429,17 @@ if __name__ == '__main__':
         print("❌ No documents in input/ folder!")
         print("📂 Put your PDF/DOCX/TEX files in input/ first")
     else:
-        # Prompt for output filename
-        print("-" * 50)
-        custom_name = input("Enter name for final PDF (default: FINAL_MERGED_DOCUMENT): ").strip()
+        # Determine output filename
+        custom_name = name
         if not custom_name:
-            custom_name = "FINAL_MERGED_DOCUMENT"
-        print("-" * 50)
+            # Interactive fallback if no argument provided
+            print("-" * 50)
+            custom_name = input("Enter name for final PDF (default: FINAL_MERGED_DOCUMENT): ").strip()
+            if not custom_name:
+                custom_name = "FINAL_MERGED_DOCUMENT"
+            print("-" * 50)
+        else:
+             print(f"📄 Output name provided: {custom_name}")
 
         print("\n🔄 Converting...")
         for chapter in merger.chapters:
@@ -448,3 +458,6 @@ if __name__ == '__main__':
         print("\n⚙️  Compiling...")
         final_pdf = merger.compile_final_pdf(master_tex, custom_name)
         print(f"\n✅ SUCCESS! {final_pdf}")
+
+if __name__ == '__main__':
+    main()

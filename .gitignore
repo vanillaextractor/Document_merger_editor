@@ -25,7 +25,6 @@ __pycache__/
 # Exception for PDF/DOCX if they are required assets (like logo or specific examples to keep)
 !ideas_logo.png
 !scripts/
-!input/
 
 # Dev/Debug Scripts
 check_*.py

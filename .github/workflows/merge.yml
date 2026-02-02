@@ -1,0 +1,46 @@
+name: Document Merger
+
+on:
+  push:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  build-and-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-latex-recommended
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Verify Input Directory
+        run: |
+          if [ ! -d "input" ]; then
+            echo "Expected 'input' directory not found. Creating empty one to prevent failure, but no files will be merged."
+            mkdir input
+          fi
+
+      - name: Run Merger Script
+        run: |
+          python scripts/merger.py --name "Automated_Merge_Result"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-document
+          path: output/*.pdf
+          if-no-files-found: warn
