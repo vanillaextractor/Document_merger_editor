@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Merger Script
         run: |
-          python scripts/merger.py --name "Automated_Merge_Result"
+          python scripts/merger.py --name "Automated_Merge_Result" --title "NPCYF Documentation"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
