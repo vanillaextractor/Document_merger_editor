@@ -1,0 +1,240 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+
+
+% Page Layout
+\geometry{
+    a4paper,
+    top=25mm,
+    bottom=25mm,
+    left=25mm,
+    right=25mm,
+    headheight=15pt
+}
+
+% Code highlighting configuration
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Document Merger Script Documentation}
+\lhead{Version 1.0}
+\cfoot{Institute of Data Engineering Analytics and Science \quad \thepage}
+
+\title{\textbf{Document Merger Script Documentation}\\ \large Technical Manual \& Customization Guide}
+\author{Institute of Data Engineering Analytics and Science}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+The \texttt{merger.py} script is a robust automation tool designed to merge multiple documents into a single, cohesive PDF file. It supports various input formats including PDF, DOCX, TEX, and MD. 
+
+Key features include:
+\begin{itemize}
+    \item \textbf{Multi-format Support}: Automatically converts DOCX, Markdown, and LaTeX to PDF before merging.
+    \item \textbf{Intelligent Indexing}: Scans content for keywords defined in \texttt{keywords.txt} and generates a comprehensive index.
+    \item \textbf{Smart Bookmarks}: preserving and restructuring Table of Contents (TOC) with correct page numbers.
+    \item \textbf{Uniform Styling}: Applies consistent margins and headers across the final document.
+\end{itemize}
+
+\section{Prerequisites \& Installation}
+
+Before running the script, ensure the following system dependencies are installed:
+
+\subsection{System Requirements}
+\begin{enumerate}
+    \item \textbf{Python 3.8+}: The core programming language.
+    \item \textbf{XeLaTeX}: Required for compiling the PDF. Usually part of a TeX distribution like TeX Live or MiKTeX.
+    \item \textbf{Pandoc}: Required for converting DOCX and Markdown files.
+\end{enumerate}
+
+\subsection{Python Dependencies}
+Install the required Python packages using the provided \texttt{requirements.txt}:
+
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt
+\end{lstlisting}
+
+\textbf{Core Libraries:}
+\begin{itemize}
+    \item \texttt{pypandoc}: Wrapper for Pandoc conversions.
+    \item \texttt{PyPDF2}: For PDF manipulation and reading.
+    \item \texttt{python-docx}: For interacting with Word documents.
+    \item \texttt{click}: For command-line interface arguments.
+\end{itemize}
+
+\section{Usage Guide}
+
+\subsection{Directory Structure}
+The script expects the following directory structure:
+\begin{verbatim}
+project_root/
+|-- input/              # Place all source files here (pdf, docx, tex)
+|-- output/             # Final fused PDF will appear here
+|-- keywords.txt        # (Optional) List of keywords for indexing
+`-- scripts/
+    `-- merger.py       # The main script
+\end{verbatim}
+
+\subsection{Running the Script}
+Navigate to the project directory and run:
+
+\begin{lstlisting}[language=bash]
+python scripts/merger.py
+\end{lstlisting}
+
+\subsubsection{Command Line Arguments}
+You can specify the output filename and document title directly:
+
+\begin{lstlisting}[language=bash]
+python scripts/merger.py --name "My_Final_Report" --title "Annual Report 2024"
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{--name}: The filename for the output PDF (e.g., \texttt{My\_Report.pdf}).
+    \item \texttt{--title}: The title text displayed on the cover page and metadata.
+\end{itemize}
+
+\section{GitHub Actions Automation}
+
+The project includes a continuous integration workflow defined in \texttt{.github/workflows/merge.yml}. This automation ensures that the document is rebuilt whenever changes are pushed to the repository.
+
+\subsection{Workflow Overview}
+\begin{itemize}
+    \item \textbf{Trigger}: Pushes to \texttt{main} or \texttt{master} branches.
+    \item \textbf{Runner}: \texttt{ubuntu-latest}.
+    \item \textbf{Process}:
+        \begin{enumerate}
+            \item Check out the repository.
+            \item Install system dependencies (Pandoc, XeLaTeX, TeX Live fonts).
+            \item Install Python 3.11 and dependencies from \texttt{requirements.txt}.
+            \item Execute \texttt{merger.py} with automated title "NPCYF Documentation".
+            \item Upload the generated PDF as a build artifact named \texttt{merged-document}.
+        \end{enumerate}
+\end{itemize}
+
+\subsection{Repository}
+The source code and workflow configuration are hosted at:\\
+\url{https://github.com/vanillaextractor/Document_merger_editor}
+
+\section{Code Analysis}
+
+The script is built around the \texttt{DocumentMerger} class.
+
+\subsection{Key Methods}
+
+\begin{itemize}
+    \item \textbf{\texttt{scan\_documents()}}: Scans the \texttt{input/} directory and registers supported files.
+    
+    \item \textbf{\texttt{convert\_to\_pdf(chapter)}}: Converts non-PDF files to PDF. It uses \texttt{pypandoc} for DOCX files, enforcing specific geometry settings.
+    
+    \item \textbf{\texttt{get\_pdf\_bookmarks(pdf\_path)}}: complex logic to parse existing bookmarks and infer chapter titles to maintain a clean TOC structure.
+    
+    \item \textbf{\texttt{extract\_keywords()}}: Reads \texttt{keywords.txt} and scans the text of every page to build a keyword map.
+    
+    \item \textbf{\texttt{create\_master\_latex()}}: Generates the final \texttt{master.tex} file which uses \texttt{pdfpages} to include all converted PDFs.
+\end{itemize}
+
+\section{Customization Guide}
+
+This section details how to modify the script to change margins, layout, and fonts. All changes are made directly in \texttt{scripts/merger.py}.
+
+\subsection{Changing Margins}
+The margins are defined in two places. You must update both to ensure consistency.
+
+\subsubsection{1. For DOCX/Text Conversions}
+In the \texttt{convert\_to\_pdf} method (around line 75 and 88), find the \texttt{extra\_args} list. The margin is set via the \texttt{-V geometry:margin=...} option.
+
+\begin{lstlisting}[language=python, caption=Changing Margins for Conversions]
+# OLD CODE (1 inch margins)
+extra_args=['--pdf-engine=xelatex', '-V', 'geometry:margin=1in']
+
+# NEW CODE (e.g., 2cm margins)
+extra_args=['--pdf-engine=xelatex', '-V', 'geometry:margin=2cm']
+\end{lstlisting}
+
+\subsubsection{2. For the Master Document}
+In the \texttt{create\_master\_latex} method (around line 319), find the \texttt{\textbackslash usepackage} definition for geometry.
+
+\begin{lstlisting}[language=python, caption=Changing Global Margins]
+# OLD CODE
+latex_content = r"""
+\documentclass[12pt,a4paper]{book}
+\usepackage{fontspec}
+\usepackage[margin=1in]{geometry}  % <--- CHANGE THIS LINE
+...
+"""
+
+# NEW CODE (Example: 1.5 inch left, 1 inch others)
+\usepackage[left=1.5in, right=1in, top=1in, bottom=1in]{geometry}
+\end{lstlisting}
+
+\subsection{Changing Header and Footer}
+The header and footer for the final document are defined in the \texttt{create\_master\_latex} method within the \texttt{latex\_content} string (lines 340-344).
+
+\begin{lstlisting}[language=tex]
+\pagestyle{fancy}
+\fancyhf{}
+% \rhead defines the right header
+\rhead{\thepage{} / \pageref{LastPage}} 
+% \cfoot defines the center footer
+\cfoot{\includegraphics[height=0.8cm]{ideas_logo.png} ...}
+\end{lstlisting}
+
+To remove the logo from the footer, simply edit the content inside \texttt{\textbackslash cfoot\{...\}}.
+
+\subsection{Modifying Fonts}
+By default, the script relies on standard LaTeX fonts or whatever \texttt{xelatex} picks up. To enforce a specific font (e.g., Arial or Times New Roman), you need to modify the \texttt{latex\_content} in \texttt{create\_master\_latex}.
+
+\begin{lstlisting}[language=tex]
+\usepackage{fontspec}
+% Add this line to set a main font (must be installed on system)
+\setmainfont{Times New Roman} 
+\end{lstlisting}
+
+\section{Troubleshooting}
+
+\begin{description}
+    \item[Pandoc Error:] If you see \texttt{Pandoc died with exitcode...}, likely the input DOCX is corrupted or contains elements Pandoc cannot handle. Try saving it as a simpler DOCX.
+    \item[XeLaTeX Error:] If compilation fails, check the \texttt{output/master.log} file. It usually indicates missing packages or font issues.
+    \item[Empty Index:] Ensure \texttt{keywords.txt} is not empty and keywords exactly match terms in the text (case-insensitive indexing is implemented but spelling matters).
+\end{description}
+
+\end{document}
